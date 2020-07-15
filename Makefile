@@ -46,6 +46,8 @@ DEFINITIONS :=  -X=$(DEFIMPORTPATH).GoVersion='$(subst $(SPACE),$(SPACETO),$(she
                 -X=$(DEFIMPORTPATH).ModulePath='$(MODULEPATH)'                                                                      \
                 -X=$(DEFIMPORTPATH).GOOS='$(shell echo $${GOOS:-$$(go env GOOS 2> /dev/null)})'                                     \
                 -X=$(DEFIMPORTPATH).GOARCH='$(shell echo $${GOARCH:-$$(go env GOARCH 2> /dev/null)})'                               \
+                -X=$(DEFIMPORTPATH).GOHOSTOS='$(shell echo $${GOHOSTOS:-$$(go env GOHOSTOS 2> /dev/null)})'                         \
+                -X=$(DEFIMPORTPATH).GOHOSTARCH='$(shell echo $${GOHOSTARCH:-$$(go env GOHOSTARCH 2> /dev/null)})'                   \
                 -X=$(DEFIMPORTPATH).Build='$(BUILD)'                                                                                \
                 -X=$(DEFIMPORTPATH).BuildTimeStamp='$(shell date +%s)'
 
