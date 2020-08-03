@@ -30,6 +30,7 @@ SPACETO := +
 
 BUILD := debug
 DEFIMPORTPATH := main
+SEMVER := 0.1.0
 
 DEFINITIONS :=  -X=$(DEFIMPORTPATH).GoVersion='$(subst $(SPACE),$(SPACETO),$(shell go version 2> /dev/null))'                       \
                 -X=$(DEFIMPORTPATH).SysInfo='$(subst $(SPACE),$(SPACETO),$(shell uname -a 2> /dev/null))'                           \
@@ -48,6 +49,7 @@ DEFINITIONS :=  -X=$(DEFIMPORTPATH).GoVersion='$(subst $(SPACE),$(SPACETO),$(she
                 -X=$(DEFIMPORTPATH).GOARCH='$(shell echo $${GOARCH:-$$(go env GOARCH 2> /dev/null)})'                               \
                 -X=$(DEFIMPORTPATH).GOHOSTOS='$(shell echo $${GOHOSTOS:-$$(go env GOHOSTOS 2> /dev/null)})'                         \
                 -X=$(DEFIMPORTPATH).GOHOSTARCH='$(shell echo $${GOHOSTARCH:-$$(go env GOHOSTARCH 2> /dev/null)})'                   \
+                -X=$(DEFIMPORTPATH).SemVer='$(SEMVER)'                                                                              \
                 -X=$(DEFIMPORTPATH).Build='$(BUILD)'                                                                                \
                 -X=$(DEFIMPORTPATH).BuildTimeStamp='$(shell date +%s)'
 
