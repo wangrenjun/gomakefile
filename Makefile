@@ -32,26 +32,26 @@ BUILD := debug
 DEFIMPORTPATH := main
 SEMVER := 0.1.0
 
-DEFINITIONS :=  -X=$(DEFIMPORTPATH).GoVersion='$(subst $(SPACE),$(SPACETO),$(shell go version 2> /dev/null))'                       \
-                -X=$(DEFIMPORTPATH).SysInfo='$(subst $(SPACE),$(SPACETO),$(shell uname -a 2> /dev/null))'                           \
-                -X=$(DEFIMPORTPATH).LogName='$(shell whoami 2> /dev/null)'                                                          \
-                -X=$(DEFIMPORTPATH).UserID='$(shell id -u 2> /dev/null)'                                                            \
-                -X=$(DEFIMPORTPATH).Host='$(shell hostname -f 2> /dev/null)'                                                        \
-                -X=$(DEFIMPORTPATH).User='$(shell git config user.name 2> /dev/null)'                                               \
-                -X=$(DEFIMPORTPATH).Email='$(shell git config user.email 2> /dev/null)'                                             \
-                -X=$(DEFIMPORTPATH).Repo='$(shell basename $$(git rev-parse --show-toplevel 2> /dev/null))'                         \
-                -X=$(DEFIMPORTPATH).Branch='$(shell git branch --contain HEAD 2> /dev/null | grep '*' | head -n1 | cut -d' ' -f2-)' \
-                -X=$(DEFIMPORTPATH).LatestTag='$(shell git describe --tags --dirty=-dev 2> /dev/null)'                              \
-                -X=$(DEFIMPORTPATH).LatestCommit='$(shell git rev-parse HEAD 2> /dev/null)'                                         \
-                -X=$(DEFIMPORTPATH).LatestCommitTimeStamp='$(shell git log -1 --format=%ct 2> /dev/null)'                           \
-                -X=$(DEFIMPORTPATH).ModulePath='$(MODULEPATH)'                                                                      \
-                -X=$(DEFIMPORTPATH).GOOS='$(shell echo $${GOOS:-$$(go env GOOS 2> /dev/null)})'                                     \
-                -X=$(DEFIMPORTPATH).GOARCH='$(shell echo $${GOARCH:-$$(go env GOARCH 2> /dev/null)})'                               \
-                -X=$(DEFIMPORTPATH).GOHOSTOS='$(shell echo $${GOHOSTOS:-$$(go env GOHOSTOS 2> /dev/null)})'                         \
-                -X=$(DEFIMPORTPATH).GOHOSTARCH='$(shell echo $${GOHOSTARCH:-$$(go env GOHOSTARCH 2> /dev/null)})'                   \
-                -X=$(DEFIMPORTPATH).SemVer='$(SEMVER)'                                                                              \
-                -X=$(DEFIMPORTPATH).Build='$(BUILD)'                                                                                \
-                -X=$(DEFIMPORTPATH).BuildTimeStamp='$(shell date +%s)'
+DEFINITIONS :=  -X=$(DEFIMPORTPATH).GoVersion=$(subst $(SPACE),$(SPACETO),$(shell go version 2> /dev/null))                         \
+                -X=$(DEFIMPORTPATH).SysInfo=$(subst $(SPACE),$(SPACETO),$(shell uname -a 2> /dev/null))                             \
+                -X=$(DEFIMPORTPATH).LogName=$(shell whoami 2> /dev/null)                                                            \
+                -X=$(DEFIMPORTPATH).UserID=$(shell id -u 2> /dev/null)                                                              \
+                -X=$(DEFIMPORTPATH).Host=$(shell hostname -f 2> /dev/null)                                                          \
+                -X=$(DEFIMPORTPATH).User=$(shell git config user.name 2> /dev/null)                                                 \
+                -X=$(DEFIMPORTPATH).Email=$(shell git config user.email 2> /dev/null)                                               \
+                -X=$(DEFIMPORTPATH).Repo=$(shell basename $$(git rev-parse --show-toplevel 2> /dev/null))                           \
+                -X=$(DEFIMPORTPATH).Branch=$(shell git branch --contain HEAD 2> /dev/null | grep '*' | head -n1 | cut -d' ' -f2-)   \
+                -X=$(DEFIMPORTPATH).LatestTag=$(shell git describe --tags --dirty=-dev 2> /dev/null)                                \
+                -X=$(DEFIMPORTPATH).LatestCommit=$(shell git rev-parse HEAD 2> /dev/null)                                           \
+                -X=$(DEFIMPORTPATH).LatestCommitTimeStamp=$(shell git log -1 --format=%ct 2> /dev/null)                             \
+                -X=$(DEFIMPORTPATH).ModulePath=$(MODULEPATH)                                                                        \
+                -X=$(DEFIMPORTPATH).GOOS=$(shell echo $${GOOS:-$$(go env GOOS 2> /dev/null)})                                       \
+                -X=$(DEFIMPORTPATH).GOARCH=$(shell echo $${GOARCH:-$$(go env GOARCH 2> /dev/null)})                                 \
+                -X=$(DEFIMPORTPATH).GOHOSTOS=$(shell echo $${GOHOSTOS:-$$(go env GOHOSTOS 2> /dev/null)})                           \
+                -X=$(DEFIMPORTPATH).GOHOSTARCH=$(shell echo $${GOHOSTARCH:-$$(go env GOHOSTARCH 2> /dev/null)})                     \
+                -X=$(DEFIMPORTPATH).SemVer=$(SEMVER)                                                                                \
+                -X=$(DEFIMPORTPATH).Build=$(BUILD)                                                                                  \
+                -X=$(DEFIMPORTPATH).BuildTimeStamp=$(shell date +%s)
 
 GOSUBDIRS := ./cmd ./internal ./pkg
 _GOPATH := $(shell echo $${GOPATH:-$$(go env GOPATH 2> /dev/null)})
