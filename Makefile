@@ -1,3 +1,17 @@
+# The directory structure is based on https://github.com/golang-standards/project-layout
+MODE := debug
+BINDIR = $(BINDIR.${MODE})
+BINDIR.debug := dist/debug
+BINDIR.release := dist/release
+TARGETS.debug := $(BINDIR.debug)/<APP1> $(BINDIR.debug)/<APP2>
+TARGETS.release := $(BINDIR.release)/<APP1> $(BINDIR.release)/<APP2>
+MAINPACKAGES = $(MODULEPATH)/cmd/<APP1> $(MODULEPATH)/cmd/<APP2>
+DEFIMPORTPATH = main
+SEMVER := 0.1.0
+GOSUBDIRS := ./cmd ./internal ./pkg
+CROSSOS := linux windows darwin freebsd openbsd netbsd
+CROSSARCH := amd64
+
 RED         = $(shell printf "\033[31m")
 BOLDRED     = $(shell printf "\033[1;31m")
 YELLOW      = $(shell printf "\033[33m")
@@ -12,14 +26,11 @@ ifneq ($(shell git rev-parse --git-dir &> /dev/null; echo $$?), 0)
 endif
 
 ifeq ($(shell go env GO111MODULE 2> /dev/null), off)
-    $(warning $(BOLDYELLOW)Not using Go Modules$(NORMAL))
-    MODULEPATH := .
+    $(error $(BOLDRED)Not using Go Modules$(NORMAL))
+else ifeq ($(shell go env GOMOD 2> /dev/null),)
+    $(error $(BOLDRED)go.mod not found$(NORMAL))
 else
     MODULEPATH := $(shell go mod edit -json 2> /dev/null | jq -r '.Module.Path')
-endif
-
-ifeq ($(shell go env GOMOD 2> /dev/null),)
-    $(warning $(BOLDYELLOW)go.mod not found$(NORMAL))
 endif
 
 QUIET := $(findstring s, $(word 1, $(MAKEFLAGS)))
@@ -27,10 +38,6 @@ IGNORE_ERRORS := $(findstring i, $(word 1, $(MAKEFLAGS)))
 KEEP_GOING := $(findstring k, $(word 1, $(MAKEFLAGS)))
 SPACE := $(subst ,, )
 SPACETO := +
-
-BUILD := debug
-DEFIMPORTPATH := main
-SEMVER := 0.1.0
 
 DEFINITIONS :=  -X=$(DEFIMPORTPATH).GoVersion=$(subst $(SPACE),$(SPACETO),$(shell go version 2> /dev/null))                         \
                 -X=$(DEFIMPORTPATH).SysInfo=$(subst $(SPACE),$(SPACETO),$(shell uname -a 2> /dev/null))                             \
@@ -50,10 +57,8 @@ DEFINITIONS :=  -X=$(DEFIMPORTPATH).GoVersion=$(subst $(SPACE),$(SPACETO),$(shel
                 -X=$(DEFIMPORTPATH).GOHOSTOS=$(shell echo $${GOHOSTOS:-$$(go env GOHOSTOS 2> /dev/null)})                           \
                 -X=$(DEFIMPORTPATH).GOHOSTARCH=$(shell echo $${GOHOSTARCH:-$$(go env GOHOSTARCH 2> /dev/null)})                     \
                 -X=$(DEFIMPORTPATH).SemVer=$(SEMVER)                                                                                \
-                -X=$(DEFIMPORTPATH).Build=$(BUILD)                                                                                  \
                 -X=$(DEFIMPORTPATH).BuildTimeStamp=$(shell date +%s)
 
-GOSUBDIRS := ./cmd ./internal ./pkg
 _GOPATH := $(shell echo $${GOPATH:-$$(go env GOPATH 2> /dev/null)})
 _GOBIN := $(shell echo $${GOBIN:-$$(go env GOBIN 2> /dev/null)})
 GOPACKAGES := $(foreach dir,$(GOSUBDIRS),$(shell go list $(dir)/... 2> /dev/null | grep -v /vendor/))
@@ -62,19 +67,17 @@ GOFILES := $(GOFILES) $(foreach dir,$(GOSUBDIRS),$(shell go list -f '{{ range .C
 TESTGOFILES := $(foreach dir,$(GOSUBDIRS),$(shell go list -f '{{ range .TestGoFiles }}{{ $$.Dir }}/{{ . }} {{ end }}' $(dir)/... 2> /dev/null | grep -v /vendor/))
 TESTGOFILES := $(TESTGOFILES) $(foreach dir,$(GOSUBDIRS),$(shell go list -f '{{ range .XTestGoFiles }}{{ $$.Dir }}/{{ . }} {{ end }}' $(dir)/... 2> /dev/null | grep -v /vendor/))
 TESTGOPACKAGES := $(foreach dir,$(GOSUBDIRS),$(shell go list -f '{{ if (or .TestGoFiles .XTestGoFiles) }}{{ .ImportPath }}{{ end }}' $(dir)/... 2> /dev/null | grep -v /vendor/))
-CROSSOS := linux windows darwin freebsd openbsd netbsd
-CROSSARCH := amd64
 
-BUILDOPTS = $(BUILDOPTS.${BUILD})
+BUILDOPTS = $(BUILDOPTS.${MODE})
 BUILDOPTS.debug :=
 BUILDOPTS.release := -trimpath
-LDFLAGS = $(LDFLAGS.${BUILD})
-LDFLAGS.debug := -ldflags="$(DEFINITIONS)"
-LDFLAGS.release := -ldflags="-s -w $(DEFINITIONS)"
-GCFLAGS = $(GCFLAGS.${BUILD})
+LDFLAGS = $(LDFLAGS.${MODE})
+LDFLAGS.debug := -ldflags="$(DEFINITIONS) -X=$(DEFIMPORTPATH).Mode=debug"
+LDFLAGS.release := -ldflags="-s -w $(DEFINITIONS) -X=$(DEFIMPORTPATH).Mode=release"
+GCFLAGS = $(GCFLAGS.${MODE})
 GCFLAGS.debug := -gcflags='-N -l'
 GCFLAGS.release := -gcflags=-trimpath="$(_GOPATH)/src"
-ASMFLAGS = $(ASMFLAGS.${BUILD})
+ASMFLAGS = $(ASMFLAGS.${MODE})
 ASMFLAGS.debug :=
 ASMFLAGS.release := -asmflags=-trimpath="$(_GOPATH)/src"
 TESTOPTS := -timeout 60s -race
@@ -85,15 +88,8 @@ GETOPTS := -u
 GOLINTOPTS :=
 VETOPTS :=
 CLEANOPTS := -cache -testcache -i
-BINDIR = $(BINDIR.${BUILD})
-BINDIR.debug := dist/debug
-BINDIR.release := dist/release
-TARGETDIRS = $(TARGETDIRS.${BUILD})
-TARGETDIRS.debug := $(BINDIR.debug)/app1 $(BINDIR.debug)/app2
-TARGETDIRS.release := $(BINDIR.release)/app1 $(BINDIR.release)/app2
-MAINDIRS = cmd/app1 cmd/app2
-LOOKUP.app1 := cmd/app1
-LOOKUP.app2 := cmd/app2
+CROSSTARGETS.debug := $(foreach dir, $(MAINPACKAGES), $(foreach os, $(CROSSOS), $(foreach arch, $(CROSSARCH), $(BINDIR.debug)/$$(basename $(dir)).$(os).$(arch))))
+CROSSTARGETS.release := $(foreach dir, $(MAINPACKAGES), $(foreach os, $(CROSSOS), $(foreach arch, $(CROSSARCH), $(BINDIR.release)/$$(basename $(dir)).$(os).$(arch))))
 
 ifndef QUIET
     BUILDOPTS.debug += -v -x
@@ -136,26 +132,33 @@ endif
 .DEFAULT_GOAL := all
 
 all: build
-debug: BUILD := debug
-debug: $(TARGETDIRS.debug)
-release: BUILD := release
-release: $(TARGETDIRS.release)
 
-build: $(TARGETDIRS)
+build: debug
+build: release
 
 .PHONY: build
 
-$(MAINDIRS):
-	go build $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) -o $(BINDIR)/$(shell basename $@) $(MODULEPATH)/$@
+debug: MODE := debug
+debug: $(TARGETS.debug)
 
-.PHONY: $(MAINDIRS)
+.PHONY: debug
 
-$(TARGETDIRS.debug) $(TARGETDIRS.release): $(GOFILES) go.mod go.sum
-	go build $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) -o $@ $(MODULEPATH)/$(LOOKUP.$(shell basename $@))
+release: MODE := release
+release: $(TARGETS.release)
+
+.PHONY: release
+
+$(MAINPACKAGES):
+	go build $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) -o $(BINDIR)/$(shell basename $@) $@
+
+.PHONY: $(MAINPACKAGES)
+
+dist/%:
+	go build $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) -o $@ $(MODULEPATH)/cmd/$(shell basename $@)
 
 install:
-	for dir in $(MAINDIRS); do                                                          \
-		go install $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) $(MODULEPATH)/$$dir;  \
+	for dir in $(MAINPACKAGES); do                                          \
+		go install $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) $$dir;    \
 	done
 
 .PHONY: install
@@ -195,29 +198,63 @@ fmt:
 
 .PHONY: fmt
 
-clean:
-	for dir in $(MAINDIRS); do                                                      \
-		go clean $(CLEANOPTS) $(MODULEPATH)/$$dir;                                  \
-		rm -f $(BINDIR)/$$(basename $$dir);                                         \
-		for os in $(CROSSOS); do                                                    \
-			for arch in $(CROSSARCH); do                                            \
-				rm -f $(BINDIR)/$$(basename $$dir).$$os.$$arch;                     \
-			done                                                                    \
-		done                                                                        \
-	done
+clean: cleandebug
+clean: cleanrelease
 
 .PHONY: clean
 
-cross:
-	for dir in $(MAINDIRS); do                                                      \
+cleandebug:
+	for dir in $(MAINPACKAGES); do                                                  \
+		go clean $(CLEANOPTS) $(MODULEPATH)/$$dir;                                  \
+		rm -f $(BINDIR.debug)/$$(basename $$dir);                                   \
 		for os in $(CROSSOS); do                                                    \
 			for arch in $(CROSSARCH); do                                            \
-				env GOOS=$$os GOARCH=$$arch go build $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) -o $(BINDIR)/$$(basename $$dir).$$os.$$arch $(MODULEPATH)/$$dir;    \
+				rm -f $(BINDIR.debug)/$$(basename $$dir).$$os.$$arch;               \
 			done                                                                    \
 		done                                                                        \
 	done
 
+.PHONY: cleandebug
+
+cleanrelease:
+	for dir in $(MAINPACKAGES); do                                                  \
+		go clean $(CLEANOPTS) $(MODULEPATH)/$$dir;                                  \
+		rm -f $(BINDIR.release)/$$(basename $$dir);                                 \
+		for os in $(CROSSOS); do                                                    \
+			for arch in $(CROSSARCH); do                                            \
+				rm -f $(BINDIR.release)/$$(basename $$dir).$$os.$$arch;             \
+			done                                                                    \
+		done                                                                        \
+	done
+
+.PHONY: cleanrelease
+
+cross: crossdebug
+cross: crossrelease
+
 .PHONY: cross
+
+crossdebug:
+	for dir in $(MAINPACKAGES); do                                                  \
+		for os in $(CROSSOS); do                                                    \
+			for arch in $(CROSSARCH); do                                            \
+				env GOOS=$$os GOARCH=$$arch go build $(BUILDOPTS.debug) $(GCFLAGS.debug) $(ASMFLAGS.debug) $(LDFLAGS.debug) -o $(BINDIR.debug)/$$(basename $$dir).$$os.$$arch $$dir;    \
+			done                                                                    \
+		done                                                                        \
+	done
+
+.PHONY: crossdebug
+
+crossrelease:
+	for dir in $(MAINPACKAGES); do                                                  \
+		for os in $(CROSSOS); do                                                    \
+			for arch in $(CROSSARCH); do                                            \
+				env GOOS=$$os GOARCH=$$arch go build $(BUILDOPTS.release) $(GCFLAGS.release) $(ASMFLAGS.release) $(LDFLAGS.release) -o $(BINDIR.release)/$$(basename $$dir).$$os.$$arch $$dir;  \
+			done                                                                    \
+		done                                                                        \
+	done
+
+.PHONY: crossrelease
 
 list:
 	echo '$(BOLDGREEN)Import path:$(NORMAL)'
