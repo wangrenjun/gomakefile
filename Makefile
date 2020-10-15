@@ -1,14 +1,11 @@
-# The directory structure is based on https://github.com/golang-standards/project-layout
+SEMVER := 0.1.0
 MODE := debug
+APPLICATIONS := <APP1> <APP2> <APP3..>
 BINDIR = $(BINDIR.${MODE})
 BINDIR.debug := dist/debug
 BINDIR.release := dist/release
-TARGETS.debug := $(BINDIR.debug)/<APP1> $(BINDIR.debug)/<APP2>
-TARGETS.release := $(BINDIR.release)/<APP1> $(BINDIR.release)/<APP2>
-MAINPACKAGES = $(MODULEPATH)/cmd/<APP1> $(MODULEPATH)/cmd/<APP2>
-DEFIMPORTPATH = main
-SEMVER := 0.1.0
 GOSUBDIRS := ./cmd ./internal ./pkg
+DEFIMPORTPATH = main
 CROSSOS := linux windows darwin freebsd openbsd netbsd
 CROSSARCH := amd64
 
@@ -88,8 +85,11 @@ GETOPTS := -u
 GOLINTOPTS :=
 VETOPTS :=
 CLEANOPTS := -cache -testcache -i
-CROSSTARGETS.debug := $(foreach dir, $(MAINPACKAGES), $(foreach os, $(CROSSOS), $(foreach arch, $(CROSSARCH), $(BINDIR.debug)/$$(basename $(dir)).$(os).$(arch))))
-CROSSTARGETS.release := $(foreach dir, $(MAINPACKAGES), $(foreach os, $(CROSSOS), $(foreach arch, $(CROSSARCH), $(BINDIR.release)/$$(basename $(dir)).$(os).$(arch))))
+TARGETS.debug := $(foreach app, $(APPLICATIONS), $(BINDIR.debug)/$(app))
+TARGETS.release := $(foreach app, $(APPLICATIONS), $(BINDIR.release)/$(app))
+MAINPACKAGES := $(foreach app, $(APPLICATIONS), $(MODULEPATH)/cmd/$(app))
+CROSSTARGETS.debug := $(foreach app, $(APPLICATIONS), $(foreach os, $(CROSSOS), $(foreach arch, $(CROSSARCH), $(BINDIR.debug)/$(app).$(os).$(arch))))
+CROSSTARGETS.release := $(foreach app, $(APPLICATIONS), $(foreach os, $(CROSSOS), $(foreach arch, $(CROSSARCH), $(BINDIR.release)/$(app).$(os).$(arch))))
 
 ifndef QUIET
     BUILDOPTS.debug += -v -x
@@ -153,8 +153,11 @@ $(MAINPACKAGES):
 
 .PHONY: $(MAINPACKAGES)
 
-dist/%:
-	go build $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) -o $@ $(MODULEPATH)/cmd/$(shell basename $@)
+$(BINDIR.debug)/%: $(GOFILES) go.mod go.sum Makefile
+	go build $(BUILDOPTS.debug) $(GCFLAGS.debug) $(ASMFLAGS.debug) $(LDFLAGS.debug) -o $@ $(MODULEPATH)/cmd/$(shell basename $@)
+
+$(BINDIR.release)/%: $(GOFILES) go.mod go.sum Makefile
+	go build $(BUILDOPTS.release) $(GCFLAGS.release) $(ASMFLAGS.release) $(LDFLAGS.release) -o $@ $(MODULEPATH)/cmd/$(shell basename $@)
 
 install:
 	for dir in $(MAINPACKAGES); do                                          \
