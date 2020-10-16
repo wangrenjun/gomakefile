@@ -138,20 +138,13 @@ build: release
 
 .PHONY: build
 
-debug: MODE := debug
 debug: $(TARGETS.debug)
 
 .PHONY: debug
 
-release: MODE := release
 release: $(TARGETS.release)
 
 .PHONY: release
-
-$(MAINPACKAGES):
-	go build $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) -o $(BINDIR)/$(shell basename $@) $@
-
-.PHONY: $(MAINPACKAGES)
 
 $(BINDIR.debug)/%: $(GOFILES) go.mod go.sum Makefile
 	go build $(BUILDOPTS.debug) $(GCFLAGS.debug) $(ASMFLAGS.debug) $(LDFLAGS.debug) -o $@ $(MODULEPATH)/cmd/$(shell basename $@)
@@ -208,7 +201,7 @@ clean: cleanrelease
 
 cleandebug:
 	for dir in $(MAINPACKAGES); do                                                  \
-		go clean $(CLEANOPTS) $(MODULEPATH)/$$dir;                                  \
+		go clean $(CLEANOPTS) $$dir;                                                \
 		rm -f $(BINDIR.debug)/$$(basename $$dir);                                   \
 		for os in $(CROSSOS); do                                                    \
 			for arch in $(CROSSARCH); do                                            \
@@ -221,7 +214,7 @@ cleandebug:
 
 cleanrelease:
 	for dir in $(MAINPACKAGES); do                                                  \
-		go clean $(CLEANOPTS) $(MODULEPATH)/$$dir;                                  \
+		go clean $(CLEANOPTS) $$dir;                                                \
 		rm -f $(BINDIR.release)/$$(basename $$dir);                                 \
 		for os in $(CROSSOS); do                                                    \
 			for arch in $(CROSSARCH); do                                            \
