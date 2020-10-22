@@ -277,3 +277,7 @@ list:
 	done
 
 .PHONY: list
+
+cloc:
+	cloc .
+	cloc --by-file .
