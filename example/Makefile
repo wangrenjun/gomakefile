@@ -1,6 +1,6 @@
 SEMVER := 0.1.0
 MODE := debug
-APPLICATIONS := <APP1> <APP2> <APP3..>
+APPLICATIONS := example
 BINDIR = $(BINDIR.${MODE})
 BINDIR.debug := dist/debug
 BINDIR.release := dist/release
