@@ -6,8 +6,8 @@ BINDIR.debug := dist/debug
 BINDIR.release := dist/release
 GOSUBDIRS := ./cmd ./internal ./pkg
 DEFIMPORTPATH = github.com/wangrenjun/gomakefile/binflag
-CROSSOS := linux windows darwin freebsd openbsd netbsd
-CROSSARCH := amd64
+CROSSOS := linux windows darwin freebsd openbsd netbsd android
+CROSSARCH := amd64 arm64
 
 RED         = $(shell printf "\033[31m")
 BOLDRED     = $(shell printf "\033[1;31m")
@@ -158,6 +158,11 @@ install:
 	done
 
 .PHONY: install
+
+run:
+	for dir in $(MAINPACKAGES); do                                          \
+		go run $(BUILDOPTS) $(GCFLAGS) $(ASMFLAGS) $(LDFLAGS) $$dir;        \
+	done
 
 test:
 	go test $(TESTOPTS) $(TESTGOPACKAGES)
